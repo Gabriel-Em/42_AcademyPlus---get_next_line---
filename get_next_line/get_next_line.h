@@ -6,7 +6,7 @@
 /*   By: gpop <marvin@42.fr>                        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/12/18 19:03:33 by gpop              #+#    #+#             */
-/*   Updated: 2017/12/21 00:14:09 by gpop             ###   ########.fr       */
+/*   Updated: 2017/12/29 04:39:36 by gpop             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,30 +19,12 @@
 # include <fcntl.h>
 
 # define BUFF_SIZE 2409
-# define MAX_FD 1024
 
-typedef	struct		s_chunk
+typedef	struct		s_stack_el
 {
 	char			*str;
-	int				len;
-	int				has_eof;
-	struct s_chunk	*next;
-}					t_chunk;
-
-typedef struct		s_lt_tools
-{
-	char			*buf;
-	int				ret;
-	int				found;
-	t_chunk			*chunk;
-}					t_lt_tools;
-
-typedef struct		s_gnl_tools
-{
-	int				len;
-	int				tr_return;
-	t_chunk			*l_cnk;
-}					t_gnl_tools;
+	int				fd;
+}					t_stack_el;
 
 int					get_next_line(int const fd, char **line);
 

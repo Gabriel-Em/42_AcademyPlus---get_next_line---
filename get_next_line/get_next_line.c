@@ -6,146 +6,98 @@
 /*   By: gpop <marvin@42.fr>                        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/12/18 19:03:55 by gpop              #+#    #+#             */
-/*   Updated: 2017/12/21 01:09:30 by gpop             ###   ########.fr       */
+/*   Updated: 2017/12/29 04:34:29 by gpop             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-static int		get_line_length(t_chunk **chunks, int *treated_return,
-	t_chunk **l_chunk)
+static t_stack_el	*retrieve_active_stack(t_list **stack, int fd)
 {
-	int		len;
-	int		i;
-	t_chunk	*chunk;
+	t_list		*node;
+	t_stack_el	*active;
 
-	chunk = *chunks;
-	len = 0;
-	while (chunk)
+	node = *stack;
+	while (node)
 	{
-		i = 0;
-		while (i < chunk->len && chunk->str[i] != '\n')
-		{
-			len++;
-			i++;
-		}
-		if (chunk != *chunks && i == 0)
-			*treated_return = 0;
-		*l_chunk = chunk;
-		if (i != chunk->len || chunk->has_eof)
-			return (len);
-		else
-			chunk = chunk->next;
+		if (((t_stack_el*)(node->content))->fd == fd)
+			return ((t_stack_el*)node->content);
+		node = node->next;
 	}
-	l_chunk = NULL;
-	return (-1);
+	if (!(active = (t_stack_el*)malloc(sizeof(t_stack_el))) ||
+		!(active->str = ft_strnew(0)))
+		return (NULL);
+	active->fd = fd;
+	if (!(node = ft_lstnew(NULL, 0)))
+		return (NULL);
+	node->content_size = sizeof(active);
+	node->content = active;
+	ft_lstadd(stack, node);
+	return ((t_stack_el*)(node->content));
 }
 
-static t_chunk	*add_chunk(t_chunk **chunks, char *str, int len, int has_eof)
+static int			keep_reading(t_stack_el **active)
 {
-	t_chunk *tmp;
-	t_chunk *new_chunk;
+	char	*tmp;
+	int		ret;
+	char	buf[BUFF_SIZE + 1];
 
-	new_chunk = (t_chunk*)malloc(sizeof(t_chunk));
-	new_chunk->str = str;
-	new_chunk->len = len;
-	new_chunk->has_eof = has_eof;
-	new_chunk->next = NULL;
-	if (*chunks == NULL)
+	while ((ret = read((*active)->fd, buf, BUFF_SIZE)) > 0)
 	{
-		*chunks = new_chunk;
+		buf[ret] = '\0';
+		tmp = ft_strjoin((*active)->str, buf);
+		ft_strdel(&((*active)->str));
+		(*active)->str = tmp;
+		if (ft_strchr((*active)->str, '\n'))
+			return (1);
 	}
-	else
-	{
-		tmp = *chunks;
-		while (tmp->next)
-			tmp = tmp->next;
-		tmp->next = new_chunk;
-	}
-	return (new_chunk);
-}
-
-static int		look_through(int fd, t_chunk **chunks)
-{
-	t_lt_tools	lt;
-
-	lt.found = 0;
-	lt.ret = 23;
-	lt.chunk = *chunks;
-	while (!lt.found && lt.ret)
-	{
-		lt.buf = ft_strnew(BUFF_SIZE);
-		lt.ret = read(fd, lt.buf, BUFF_SIZE);
-		if (lt.ret > 0)
-		{
-			if (ft_strchr(lt.buf, '\n'))
-				lt.found = 1;
-			lt.chunk = add_chunk(chunks, lt.buf, lt.ret, 0);
-		}
-		else
-		{
-			ft_strdel(&(lt.buf));
-			if (lt.ret == -1)
-				return (0);
-			if (lt.chunk != NULL)
-				lt.chunk->has_eof = 1;
-		}
-	}
-	return (1);
-}
-
-static void		chunks_to_line(t_chunk **chunks, char **line, int len)
-{
-	t_chunk *chunk;
-
-	*line = ft_strnew(len);
-	while (len >= 0 && *chunks)
-		if (len >= (*chunks)->len)
-		{
-			ft_strncat(*line, (*chunks)->str, (*chunks)->len);
-			len -= (*chunks)->len;
-			if (len == 0)
-				len = -1;
-			ft_strdel(&((*chunks)->str));
-			chunk = *chunks;
-			*chunks = (*chunks)->next;
-			free(chunk);
-		}
-		else
-		{
-			ft_strncat(*line, (*chunks)->str, len);
-			(*chunks)->str = ft_strshorten((*chunks)->str, len + 1,
-			(*chunks)->len - len - 1);
-			(*chunks)->len = (*chunks)->len - len - 1;
-			len = -1;
-		}
-}
-
-int				get_next_line(int const fd, char **line)
-{
-	static t_chunk	*chunks[MAX_FD];
-	t_gnl_tools		gnl;
-
-	if (fd < 0 || fd > 1023 || line == NULL)
-		return (-1);
-	gnl.l_cnk = NULL;
-	gnl.tr_return = 1;
-	gnl.len = get_line_length(&chunks[fd], &(gnl.tr_return), &(gnl.l_cnk));
-	if (gnl.len == -1)
-	{
-		if (!look_through(fd, &chunks[fd]))
-			return (-1);
-		gnl.len = get_line_length(&chunks[fd], &(gnl.tr_return), &(gnl.l_cnk));
-		if (gnl.len == -1)
-			return (0);
-	}
-	if (!gnl.tr_return)
-	{
-		gnl.l_cnk->str = ft_strshorten(gnl.l_cnk->str, 1, gnl.l_cnk->len - 1);
-		gnl.l_cnk->len = gnl.l_cnk->len - 1;
-	}
-	chunks_to_line(&chunks[fd], line, gnl.len);
-	if (chunks[fd] != NULL)
+	if (ret == 0 && ft_strlen((*active)->str) > 0)
 		return (1);
-	return (ft_strlen(*line) != 0);
+	return (ret);
+}
+
+static void			free_stack_el(t_list **stack, int fd)
+{
+	t_list	*node;
+	t_list	*prev;
+
+	node = *stack;
+	prev = NULL;
+	while (node)
+	{
+		if (((t_stack_el*)(node->content))->fd == fd)
+		{
+			if (prev)
+				prev->next = node->next;
+			else
+				*stack = (*stack)->next;
+			ft_strdel(&(((t_stack_el*)(node->content))->str));
+			ft_memdel((void**)&node);
+			break;
+		}
+		prev = node;
+		node = node->next;
+	}
+}
+
+int					get_next_line(int const fd, char **line)
+{
+	static t_list	*stack;
+	t_stack_el		*active;
+	int				ret;
+
+	if (fd < 0 || !line || read(fd, 0, 0) < 0 ||
+		!(active = retrieve_active_stack(&stack, fd)))
+		return (-1);
+	if (ft_strchr(active->str, '\n'))
+	{
+		*line = ft_strcutuntil(&(active->str), '\n');
+		return (1);
+	}
+	ret = keep_reading(&active);
+	if (ret == 1)
+		*line = ft_strcutuntil(&(active->str), '\n');
+	else
+		free_stack_el(&stack, fd);	
+	return (ret);
 }
