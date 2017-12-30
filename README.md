@@ -19,11 +19,11 @@ gcc -o yourBinaryName get_next_line.o yourSource.o -L **path_to**/libft/ -lft
 ```
 Replace `**path_to**` with the right path to libft/includes/ and libft/.
 
-**Done!** As long as you're reading from file descriptors that can be accesed, get_next_line should be able to fetch lines from multiple file descriptors at the same time without any problems.
+**Done!** As long as you're reading from files that can be accesed, get_next_line should be able to fetch lines from multiple files at the same time without any problems.
 
 # How to test
 
-If you want to test the code, or your own implementation of fillit you can use 
+If you want to test the code, or your own implementation of get_next_line you can use 
 - @jgigault's [42FileChecker](https://github.com/jgigault/42FileChecker)
 
 and follow the instructions on his repository. (*Note: by the time you're reading this there's a good chance there are a lot more get_next_line testers out there, so look them up yourself as well.*)
