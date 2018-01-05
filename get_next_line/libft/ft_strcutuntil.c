@@ -6,13 +6,13 @@
 /*   By: gpop <marvin@42.fr>                        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/12/23 18:35:53 by gpop              #+#    #+#             */
-/*   Updated: 2017/12/29 03:09:40 by gpop             ###   ########.fr       */
+/*   Updated: 2018/01/05 18:37:54 by gpop             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft.h"
 
-char *ft_strcutuntil(char **src, int c)
+char	*ft_strcutuntil(char **src, int c)
 {
 	int		i;
 	char	*newstr;

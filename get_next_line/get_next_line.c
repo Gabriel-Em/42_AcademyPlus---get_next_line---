@@ -6,7 +6,7 @@
 /*   By: gpop <marvin@42.fr>                        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/12/18 19:03:55 by gpop              #+#    #+#             */
-/*   Updated: 2017/12/29 04:34:29 by gpop             ###   ########.fr       */
+/*   Updated: 2018/01/05 18:23:18 by gpop             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,7 +73,7 @@ static void			free_stack_el(t_list **stack, int fd)
 				*stack = (*stack)->next;
 			ft_strdel(&(((t_stack_el*)(node->content))->str));
 			ft_memdel((void**)&node);
-			break;
+			break ;
 		}
 		prev = node;
 		node = node->next;
@@ -98,6 +98,6 @@ int					get_next_line(int const fd, char **line)
 	if (ret == 1)
 		*line = ft_strcutuntil(&(active->str), '\n');
 	else
-		free_stack_el(&stack, fd);	
+		free_stack_el(&stack, fd);
 	return (ret);
 }
